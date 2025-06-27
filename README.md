@@ -1,0 +1,2 @@
+# Genshin_Impact_artifacts
+原神の聖遺物における最適解を探す
