@@ -4,7 +4,7 @@
 
 | 列名 | 型 | 説明 |
 |-------------|------|-------------|
-| `artifactID` | `VARCHAR(36)` | 聖遺物のID。 |
+| `id` | `VARCHAR(36)` | 聖遺物のID。 |
 | `type` | `ENUM('flowerOfLife', 'plumeOfDeath', 'sandsOfEon', 'gobletOfEonothem', 'circletOfLogos')` | 聖遺物の種類。 |
 | `mainStat` | `ENUM('flatHp', 'hpPercent', 'flatAtk', 'atkPercent', 'defPercent', 'energyRecharge', 'physicalDamage', 'hydroDamage', 'cryoDamage', 'electroDamage', 'anemoDamage', 'geoDamage', 'pyroDamage', 'dendroDamage', 'critRate', 'critDamage', 'healingBonus', 'elementalMastery')` | 聖遺物のメインステータスの種類。 |
 | `mainStatValue` | `FLOAT` | 聖遺物のメインステータスの値。 |
@@ -36,7 +36,7 @@
 
 | 列名 | 型 | 説明 |
 |-------------|------|-------------|
-| `weaponID` | `VARCHAR(36)` | 武器のID。 |
+| `id` | `VARCHAR(36)` | 武器のID。 |
 | `name` | `VARCHAR(255)` | 武器の名前。 |
 | `type` | `ENUM('sword', 'claymore', 'polearm', 'bow', 'catalyst')` | 武器の種類。 |
 | `baseAttack` | `INT` | 武器の基礎攻撃力。 |
