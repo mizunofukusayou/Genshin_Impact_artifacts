@@ -4,7 +4,6 @@ go 1.24.4
 
 require (
 	github.com/gofrs/uuid v4.4.0+incompatible
-	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.13.4
 )
 
