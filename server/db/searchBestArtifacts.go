@@ -20,7 +20,6 @@ type ArtifactSet struct {
 	GobletOfEonothem Artifact
 	CircletOfLogos   Artifact
 	ExpectedDamage   float64
-	Buff             Buff
 }
 
 type Buff struct {
@@ -28,6 +27,15 @@ type Buff struct {
 	FlatAttack       float64
 	CritDamage       float64
 	CritRate         float64
+}
+
+type Character struct {
+	ID         uuid.UUID          `json:"id"`
+	Name       string             `json:"name"`
+	Element    string             `json:"element"`
+	WeaponType string             `json:"weaponType"`
+	BaseStatus map[string]float64 `json:"baseStatus"` // Key: ステータス名, Value: ステータス値
+	Buff       Buff               // キャラクターのバフ効果
 }
 
 func SearchBestArtifacts() echo.HandlerFunc {
@@ -41,13 +49,24 @@ func SearchBestArtifacts() echo.HandlerFunc {
 	// 聖遺物から期待値を計算する
 	for i := range combinationAllArtifacts {
 		// 聖遺物の効果をBuffでまとめる
-		err = sumUpBuff(&combinationAllArtifacts[i])
+		var buff Buff
+		buff, err = sumUpBuff(&combinationAllArtifacts[i])
 		if err != nil {
 			return echo.NewHTTPError(500, "Failed to sum up buff")
 		}
 
-		// ベネットのバフとかを入れるならここかな
-		value, err := calculateDamage(combinationAllArtifacts[i])
+		// todo: ベネットのバフ、武器効果とかを計算してBuffと足し合わせたい
+		var buff2 Buff
+		buff2 = Buff{
+			AttackPercentage: 0.2,
+			FlatAttack:       100,
+			CritDamage:       0.15,
+			CritRate:         0.1,
+		}
+		buff += buff2
+
+		// todo: 並列処理をさせたい
+		value, err := calculateDamage(buff)
 		if err != nil {
 			return echo.NewHTTPError(500, "Failed to calculate damage")
 		}
