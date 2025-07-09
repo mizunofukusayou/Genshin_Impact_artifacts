@@ -1,9 +1,9 @@
 package main
 
 import (
-	"./db"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4@v4.13.4/middleware"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/mizunofukusayou/Genshin_Impact_artifacts/db"
 )
 
 func main() {
@@ -11,5 +11,5 @@ func main() {
 
 	e.Use(middleware.Logger(), middleware.Recover())
 
-	e.GET("/best-artifacts", db.SearchBestArtifacts())
+	e.GET("/best-artifacts", db.SearchBestArtifacts)
 }

@@ -1,8 +1,10 @@
 package db
 
 import (
+	"net/http"
+
 	"github.com/gofrs/uuid"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 type Artifact struct {
@@ -38,41 +40,72 @@ type Character struct {
 	Buff       Buff               // キャラクターのバフ効果
 }
 
-func SearchBestArtifacts() echo.HandlerFunc {
+func SearchBestArtifacts(c echo.Context) error {
+	characterIDStr := c.Param("characterID")
+	characterID, err := uuid.FromString(characterIDStr)
+	if err != nil {
+		c.Logger().Error("Invalid character ID:", err)
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid character ID")
+	}
+	// キャラクターの情報を取得
+	character, err := GetCharacter(characterID)
+	if err != nil {
+		c.Logger().Error("Failed to get character:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get character")
+	}
+	// キャラクターが存在しない場合
+	if character.ID == uuid.Nil {
+		return echo.NewHTTPError(http.StatusNotFound, "Character not found")
+	}
+
 	// 聖遺物の組み合わせを返す
 	var combinationAllArtifacts []ArtifactSet
-	combinationAllArtifacts, err := getAllCombinationArtifacts()
+	combinationAllArtifacts, err = getAllCombinationArtifacts()
 	if err != nil {
-		return echo.NewHTTPError(500, "Failed to get artifacts")
+		c.Logger().Error("Failed to get all combination artifacts:", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to get artifacts")
 	}
 
 	// 聖遺物から期待値を計算する
 	for i := range combinationAllArtifacts {
 		// 聖遺物の効果をBuffでまとめる
-		var buff Buff
-		buff, err = sumUpBuff(&combinationAllArtifacts[i])
+		buff, err := sumUpBuff(&combinationAllArtifacts[i])
 		if err != nil {
-			return echo.NewHTTPError(500, "Failed to sum up buff")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to sum up buff")
 		}
 
 		// todo: ベネットのバフ、武器効果とかを計算してBuffと足し合わせたい
-		var buff2 Buff
-		buff2 = Buff{
+		buff2 := Buff{
 			AttackPercentage: 0.2,
 			FlatAttack:       100,
 			CritDamage:       0.15,
 			CritRate:         0.1,
 		}
-		buff += buff2
+		// Buffの合計を計算
+		character.Buff = Buff{
+			AttackPercentage: buff.AttackPercentage + buff2.AttackPercentage,
+			FlatAttack:       buff.FlatAttack + buff2.FlatAttack,
+			CritDamage:       buff.CritDamage + buff2.CritDamage,
+			CritRate:         buff.CritRate + buff2.CritRate,
+		}
 
 		// todo: 並列処理をさせたい
-		value, err := calculateDamage(buff)
+		value, err := calculateDamage(character)
 		if err != nil {
-			return echo.NewHTTPError(500, "Failed to calculate damage")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Failed to calculate damage")
 		}
 		combinationAllArtifacts[i].ExpectedDamage = value
 	}
-	return echo.NewHTTPError(200, combinationAllArtifacts)
+	return echo.NewHTTPError(http.StatusOK, combinationAllArtifacts)
+}
+
+func GetCharacter(characterID uuid.UUID) (Character, error) {
+	var character Character
+	err := Character.Where("id", characterID).FindAll(&character)
+	if err != nil {
+		return Character{}, err
+	}
+	return character, nil
 }
 
 func getAllCombinationArtifacts() ([]ArtifactSet, error) {
@@ -113,19 +146,18 @@ func getAllCombinationArtifacts() ([]ArtifactSet, error) {
 	return ret, nil
 }
 
-func sumUpBuff(artifactSet *ArtifactSet) error {
+func sumUpBuff(artifactSet *ArtifactSet) (Buff, error) {
 	// Buffをまとめるロジックを実装する
-	artifactSet.Buff = Buff{
+	return Buff{
 		AttackPercentage: artifactSet.FlowerOfLife.Substats["atkPercent"] + artifactSet.PlumeOfDeath.Substats["atkPercent"] + artifactSet.SandsOfEon.Substats["atkPercent"] + artifactSet.GobletOfEonothem.Substats["atkPercent"] + artifactSet.CircletOfLogos.Substats["atkPercent"],
 		FlatAttack:       artifactSet.FlowerOfLife.Substats["flatAtk"] + artifactSet.PlumeOfDeath.Substats["flatAtk"] + artifactSet.SandsOfEon.Substats["flatAtk"] + artifactSet.GobletOfEonothem.Substats["flatAtk"] + artifactSet.CircletOfLogos.Substats["flatAtk"],
 		CritDamage:       artifactSet.FlowerOfLife.Substats["critDamage"] + artifactSet.PlumeOfDeath.Substats["critDMG"] + artifactSet.SandsOfEon.Substats["critDMG"] + artifactSet.GobletOfEonothem.Substats["critDMG"] + artifactSet.CircletOfLogos.Substats["critDMG"],
 		CritRate:         artifactSet.FlowerOfLife.Substats["critRate"] + artifactSet.PlumeOfDeath.Substats["critRate"] + artifactSet.SandsOfEon.Substats["critRate"] + artifactSet.GobletOfEonothem.Substats["critRate"] + artifactSet.CircletOfLogos.Substats["critRate"],
 		// todo: メインステータスも入れないと
-	}
-	return nil
+	}, nil
 }
 
-func calculateDamage(artifactSet ArtifactSet) (float64, error) {
+func calculateDamage(character Character) (float64, error) {
 	// todo: 期待値を計算するロジックを実装する
 	return 0, nil
 }
