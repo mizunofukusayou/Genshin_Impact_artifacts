@@ -1,25 +1,21 @@
 # DB スキーマ
+## `status`
+| 列名 | 型 | 制約 | 説明 |
+|-------------|------|-------------|-------------|
+| `id` | `INT` | PRIMARY KEY | ステータスのID |
+| `type` | `VARCHAR(32)` | UNIQUE | ステータスの種類 |
 
-## `artifact`
+## `artifacts`
 
-| 列名 | 型 | 説明 |
-|-------------|------|-------------|
-| `id` | `VARCHAR(36)` | 聖遺物のID。 |
-| `setName` | `VARCHAR(255)` | 聖遺物セットの名前。 |
-| `setEffect` | `JSON` | 聖遺物セットの効果。キーは効果の種類、値はその値。例: `{"hpPercent": "0.2", "damageBonus": "0.15"}`。効果の種類は以下の通り。 `ENUM('hpPercent', 'atkPercent', 'damageBonus')` |
-| `type` | `ENUM('flowerOfLife', 'plumeOfDeath', 'sandsOfEon', 'gobletOfEonothem', 'circletOfLogos')` | 部位の種類。 |
-| `mainStat` | `ENUM('flatHp', 'hpPercent', 'flatAtk', 'atkPercent', 'defPercent', 'energyRecharge', 'physicalDamage', 'hydroDamage', 'cryoDamage', 'electroDamage', 'anemoDamage', 'geoDamage', 'pyroDamage', 'dendroDamage', 'critRate', 'critDamage', 'healingBonus', 'elementalMastery')` | 聖遺物のメインステータスの種類。 |
-| `mainStatValue` | `FLOAT` | 聖遺物のメインステータスの値。 |
-| `subStats` | `JSON` | 聖遺物のサブステータス。キーはステータス名、値はその値。例: `{"flatHp": 100, "critRate": 0.05}`。 ステータス名は以下の通り。 |
-|             |      | - `flatHp` |
-|             |      | - `hpPercent` |
-|             |      | - `flatAtk` |
-|             |      | - `atkPercent` |
-|             |      | - `flatDef` |
-|             |      | - `defPercent` |
-|             |      | - `energyRecharge` |
-|             |      | - `healingBonus` |
-|             |      | - `elementalMastery` |
+| 列名 | 型 | 制約 | 説明 |
+|------------|------|-------------|-------------|
+| `id` | `VARCHAR(36)` | PRIMARY KEY | 聖遺物のUUID |
+| `setName` | `VARCHAR(32)` | NOT NULL | 聖遺物セットの名前 |
+| `setEffect` | `JSON` | NOT NULL | 聖遺物セットの効果。キーは`status`テーブルの`id`、値はその値。例: `{"1": "0.2", "2": "0.15"}`|
+| `type` | `ENUM('flowerOfLife', 'plumeOfDeath', 'sandsOfEon', 'gobletOfEonothem', 'circletOfLogos')` | NOT NULL | 部位の種類。 |
+| `mainStat` | `INT` | NOT NULL | 聖遺物のメインステータスの種類`status`テーブルの`id`。 |
+| `mainStatValue` | `FLOAT` | NOT NULL | 聖遺物のメインステータスの値。 |
+| `subStats` | `JSON` | NOT NULL | 聖遺物のサブステータス。キーは`status`テーブルの`id`、値はその値。例: `{1: 100, 2: 0.05}` |
 
 ### 元素(element)の種類
 |日本語名|英語名|読み方|
@@ -34,30 +30,21 @@
 
 
 
-## `weapon`
+## `weapons`
 
 | 列名 | 型 | 説明 |
 |-------------|------|-------------|
-| `id` | `VARCHAR(36)` | 武器のID。 |
-| `name` | `VARCHAR(255)` | 武器の名前。 |
-| `type` | `ENUM('sword', 'claymore', 'polearm', 'bow', 'catalyst')` | 武器の種類。 |
+| `id` | `VARCHAR(36)` | 武器のUUID |
+| `name` | `VARCHAR(32)` | 武器の名前 |
+| `type` | `ENUM('sword', 'claymore', 'polearm', 'bow', 'catalyst')` | 武器の種類 |
 | `baseAttack` | `INT` | 武器の基礎攻撃力。 |
-| `subStat` | `ENUM('hpPercent', 'atkPercent', 'defPercent', 'energyRecharge', 'physicalDamage', 'critRate', 'critDamage', 'elementalMastery')` | 武器のサブステータスの種類。 |
-| `subStatValue` | `FLOAT` | 武器のサブステータスの値。 |
-| `additionalEffect` | `JSON` | 武器の効果。配列形式で複数の効果を定義。例: `[{"type": "atkPercent", "value": 0.2}, {"type": "damageBonus", "value": 0.12}]`。効果の種類は以下の通り。 |
-|             |      | **効果タイプ (`type`):** |
-|             |      | - `atkPercent` - 攻撃力％アップ |
-|             |      | - `damageBonus` - ダメージボーナス |
-|             |      | - `elementalMastery` - 元素熟知アップ |
-|             |      | - `critRate` - 会心率アップ |
-|             |      | - `critDamage` - 会心ダメージアップ |
-|             |      | - `energyRecharge` - 元素チャージ効率アップ |
+| `effect` | `JSON` | 武器の効果（サブステータス+追加効果）。キーは`status`テーブルの`id`、値はその値。例: `{"1": 100, "2": 0.05}` |
 
-## `character`
+## `characters`
 | 列名 | 型 | 説明 |
 |-------------|------|-------------|
 | `id` | `VARCHAR(36)` | キャラクターのID。 |
-| `name` | `VARCHAR(255)` | キャラクターの名前。 |
+| `name` | `VARCHAR(32)` | キャラクターの名前。 |
 | `element` | `ENUM('pyro', 'hydro', 'electro', 'anemo', 'geo', 'dendro')` | キャラクターの属性。 |
 | `weaponType` | `ENUM('sword', 'claymore', 'polearm', 'bow', 'catalyst')` | キャラクターの武器タイプ。 |
-| `baseStatus` | `JSON` | キャラクターの基礎ステータス(計算に必要な値のみを保持)。キーはステータス名、値はその値。例: `{"hp": 1000, "attack": 200}`。 |
+| `baseStatus` | `JSON` | キャラクターの基礎ステータス(計算に必要な値のみを保持)。キーはステータスID、値はその値。例: `{"hp": 1000, "attack": 200}`。 |
